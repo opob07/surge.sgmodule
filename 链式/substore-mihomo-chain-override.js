@@ -38,6 +38,21 @@ function addExcludeFilter(group) {
   group['exclude-filter'] = cur ? String(cur) + '|' + PREFIX_RE : PREFIX_RE;
 }
 
+// 按协议自动排除（不写节点名）：多值用 | 分隔，Mihomo 按类型匹配、不分大小写
+function addExcludeType(group, t) {
+  const cur = group['exclude-type'];
+  if (!cur) { group['exclude-type'] = t; return; }
+  const parts = String(cur).split('|');
+  if (parts.indexOf(t) < 0) group['exclude-type'] = String(cur) + '|' + t;
+}
+
+// Snell v5/v6 在 Mihomo 里建不起来（只认 v1–v4），不要给它做链式副本
+function isUnsupportedSnell(n) {
+  if (String(n.type || '').toLowerCase() !== 'snell') return false;
+  const v = parseInt(n.version, 10);
+  return v === 5 || v === 6;
+}
+
 function main(config) {
   config = config || {};
 
@@ -52,6 +67,7 @@ function main(config) {
   const chain = [];
   nodes.forEach((n) => {
     if (SKIP_UDP && UDP_TYPES.indexOf(String(n.type || '').toLowerCase()) >= 0) return;
+    if (isUnsupportedSnell(n)) return;
     const copy = Object.assign({}, n);
     copy.name = PREFIX + n.name;
     copy['dialer-proxy'] = FRONT;
@@ -70,6 +86,7 @@ function main(config) {
     groups.unshift(front);
   }
   if (front['include-all'] || front['include-all-proxies']) addExcludeFilter(front);
+  if (front['include-all'] || front['include-all-proxies']) addExcludeType(front, 'snell');
 
   // 链式组：只放副本
   let chainGroup = find(CHAIN);
@@ -80,7 +97,12 @@ function main(config) {
   chainGroup.proxies = chain.length ? chain.map((n) => n.name) : ['DIRECT'];
 
   groups.forEach((g) => {
-    if (!g || KEEP_ALL.indexOf(g.name) >= 0) return;
+    if (!g) return;
+
+    // Snell v5/v6 在 Mihomo 里建不起来，按协议自动排除（不写节点名）
+    if (g['include-all'] || g['include-all-proxies']) addExcludeType(g, 'snell');
+
+    if (KEEP_ALL.indexOf(g.name) >= 0) return;
 
     if (g['include-all'] || g['include-all-proxies']) addExcludeFilter(g);
 
