@@ -137,6 +137,7 @@ rules:
   - AND,((RULE-SET,cn!_domain),(DST-PORT,443),(NETWORK,UDP)),REJECT
   - RULE-SET,private_ip,DIRECT,no-resolve
   - RULE-SET,private_domain,DIRECT
+  - RULE-SET,ai_custom,🤖 AI
   - RULE-SET,ai_domain,🤖 AI
   - RULE-SET,microsoftcn_domain,DIRECT
   - RULE-SET,applecn_domain,DIRECT
@@ -162,6 +163,7 @@ rule-providers:
   applecn_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/apple@cn.mrs"}
   apple_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/apple.mrs"}
   emby_domain: {type: http, interval: 86400, behavior: classical, format: text, url: "https://raw.githubusercontent.com/opob07/surge.sgmodule/main/分流/Emby.list"}
+  ai_custom: {type: http, interval: 86400, behavior: classical, format: text, url: "https://raw.githubusercontent.com/opob07/surge.sgmodule/main/分流/Ai.list"}
   steamcn_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/steam@cn.mrs"}
   cn!_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/geolocation-!cn.mrs"}
 
