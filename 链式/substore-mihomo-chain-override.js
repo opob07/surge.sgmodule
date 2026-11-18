@@ -2,12 +2,11 @@
 //
 // 用法：文件 → 操作 → 添加 → 脚本 → 填本文件 URL
 //       位置必须放在「从订阅添加节点」之后（要先有节点）
-// 特点：不改动你的 YAML 模板，只做五件事
+// 特点：不改动你的 YAML 模板，只做四件事
 //       1. 复制一份节点副本，名字加「链-」前缀，并打上 dialer-proxy
 //       2. 建「🔗 前置代理」「🔗 链式代理」两个组
 //       3. 把「🔗 链式代理」加进各个选择组
 //       4. 让普通分组排除「链-」副本，避免意外两跳
-//       5. 拿掉 Mihomo 建不起的 Snell v5/v6 节点（建失败会让整个配置校验不过，FlClash 直接不显示分组和节点）
 //       换订阅时节点变了，副本自动跟着变，不用改任何东西
 //
 // 可选参数（URL 后加 #a=b&c=d）：front= / chain= / prefix= / skipudp=0
@@ -39,21 +38,6 @@ function addExcludeFilter(group) {
   group['exclude-filter'] = cur ? String(cur) + '|' + PREFIX_RE : PREFIX_RE;
 }
 
-// 按协议自动排除（不写节点名）：多值用 | 分隔，Mihomo 按类型匹配、不分大小写
-function addExcludeType(group, t) {
-  const cur = group['exclude-type'];
-  if (!cur) { group['exclude-type'] = t; return; }
-  const parts = String(cur).split('|');
-  if (parts.indexOf(t) < 0) group['exclude-type'] = String(cur) + '|' + t;
-}
-
-// Snell v5/v6 在 Mihomo 里建不起来（只认 v1–v4），不要给它做链式副本
-function isUnsupportedSnell(n) {
-  if (String(n.type || '').toLowerCase() !== 'snell') return false;
-  const v = parseInt(n.version, 10);
-  return v === 5 || v === 6;
-}
-
 function main(config) {
   config = config || {};
 
@@ -65,13 +49,8 @@ function main(config) {
   // 清掉上次运行可能残留的副本，保证重复执行结果一致
   const nodes = all.filter((n) => n && n.name && String(n.name).indexOf(PREFIX) !== 0);
 
-  // Mihomo 建不起 Snell v5/v6（只认 v1–v4），而且建失败会让整个配置校验不过、
-  // FlClash 直接不显示分组和节点，所以直接把这类节点从配置里拿掉。
-  // 只影响 Mihomo 配置，不影响 Surge / sing-box 订阅。
-  const usable = nodes.filter((n) => !isUnsupportedSnell(n));
-
   const chain = [];
-  usable.forEach((n) => {
+  nodes.forEach((n) => {
     if (SKIP_UDP && UDP_TYPES.indexOf(String(n.type || '').toLowerCase()) >= 0) return;
     const copy = Object.assign({}, n);
     copy.name = PREFIX + n.name;
@@ -79,7 +58,7 @@ function main(config) {
     chain.push(copy);
   });
 
-  config.proxies = usable.concat(chain);
+  config.proxies = nodes.concat(chain);
 
   const groups = Array.isArray(config['proxy-groups']) ? config['proxy-groups'] : [];
   const find = (name) => groups.filter((g) => g && g.name === name)[0];
@@ -91,7 +70,6 @@ function main(config) {
     groups.unshift(front);
   }
   if (front['include-all'] || front['include-all-proxies']) addExcludeFilter(front);
-  if (front['include-all'] || front['include-all-proxies']) addExcludeType(front, 'snell');
 
   // 链式组：只放副本
   let chainGroup = find(CHAIN);
@@ -103,9 +81,6 @@ function main(config) {
 
   groups.forEach((g) => {
     if (!g) return;
-
-    // Snell v5/v6 在 Mihomo 里建不起来，按协议自动排除（不写节点名）
-    if (g['include-all'] || g['include-all-proxies']) addExcludeType(g, 'snell');
 
     if (KEEP_ALL.indexOf(g.name) >= 0) return;
 
