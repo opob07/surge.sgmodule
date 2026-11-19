@@ -107,7 +107,7 @@ rule-anchor:
 
 rule-providers:
   private_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/private.mrs"}
-  ai_domain: {type: http, interval: 86400, behavior: domain, format: yaml, url: "https://ddgksf2013.top/filter/Ai.yaml"}
+  ai_domain: {type: http, interval: 86400, behavior: classical, format: yaml, url: "https://ddgksf2013.top/filter/Ai.yaml"}
   microsoftcn_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/microsoft@cn.mrs"}
   applecn_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/apple@cn.mrs"}
   apple_domain: {<<: *domain, url: "https://github.com/MetaCubeX/meta-rules-dat/raw/refs/heads/meta/geo/geosite/apple.mrs"}
